@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lisboa 1755: Ponto de Viragem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Merriweather', serif;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .fade-in {
+        animation: fadeIn 0.6s ease-out forwards;
+      }
+      @keyframes confetti {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+      }
+      .confetti {
+        position: absolute;
+        font-size: 24px;
+        animation: confetti 1s ease-out forwards;
+        pointer-events: none;
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .header-pattern {
+        background-image: 
+          radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+          radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+      }
+      .section-hover {
+        transition: all 0.3s ease;
+      }
+      .section-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      .image-zoom {
+        overflow: hidden;
+        border-radius: 0.5rem;
+      }
+      .image-zoom img {
+        transition: transform 0.5s ease;
+      }
+      .image-zoom:hover img {
+        transform: scale(1.1);
+      }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
+      }
+    }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-200">
+    <div id="root"></div>
+    <script type="module">
+      import React, { useState, useCallback, useRef, useEffect } from 'react';
+      import ReactDOM from 'react-dom/client';
+
+      // --- ICONS ---
+      const BookOpenIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" }));
+      const CheckCircleIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-6 w-6 flex-shrink-0", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" }));
+      const ChevronDownIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M19 9l-7 7-7-7" }));
+      const ClipboardCheckIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" }));
+      const HomeIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" }));
+      const XCircleIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-6 w-6 flex-shrink-0", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" }));
+      const PlayIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" }), React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M21 12a9 9 0 11-18 0 9 9 0 0118 0z" }));
+      const MicrophoneIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" }));
+      const AwardIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-16 w-16", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" }));
+      const TrophyIcon = (props) => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-8 w-8", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", ...props }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" }));
+      
+      // --- CONTENT CONSTANTS ---
+      const sections = [
+          { id: 'intro', title: 'Introdução: Lisboa na Véspera da Catástrofe', image: './image1.jpg', content: React.createElement("div", { className: "space-y-4 text-lg leading-relaxed" }, React.createElement("p", null, "Em meados do século XVIII, Lisboa era a capital opulenta de um vasto império, cujo fausto se alimentava do ouro do Brasil. Contudo, por detrás da riqueza aparente, escondia-se uma realidade urbana paradoxal. A sua estrutura medieval, labiríntica e insalubre, contrastava com a magnificência imperial."), React.createElement("p", null, "A sociedade portuguesa era profundamente católica e hierarquizada, governada por uma monarquia absolutista. O poder da Igreja e da nobreza moldava o quotidiano e a paisagem urbana, com palácios e conventos sobrepondo-se a ruas estreitas e desordenadas."), React.createElement("p", null, "Neste cenário, o dia 1 de novembro de 1755 emergiu como um momento de rutura abrupta, uma força da natureza que não só destruiria a cidade, mas também abalaria os alicerces políticos, sociais e filosóficos de Portugal e da Europa.")) },
+          { id: 'catastrophe', title: 'A Tripla Catástrofe de 1 de Novembro de 1755', image: './image2.jpg', content: React.createElement("div", { className: "space-y-6 text-lg leading-relaxed" }, React.createElement("p", null, "O desastre que se abateu sobre Lisboa foi uma sequência devastadora de três catástrofes interligadas: um sismo, um maremoto e incêndios generalizados."), React.createElement("div", { className: "pl-6 border-l-4 border-blue-500" }, React.createElement("h3", { className: "text-xl font-bold mb-2" }, "O Sismo"), React.createElement("p", null, "Ocorreu por volta das 9:40 da manhã. Com uma magnitude estimada entre 8.5 e 9 na escala de Richter, durou de sete a nove minutos. O impacto foi apocalíptico: telhados ruíram, paredes cederam e edifícios inteiros desmoronaram-se.")), React.createElement("div", { className: "pl-6 border-l-4 border-blue-500" }, React.createElement("h3", { className: "text-xl font-bold mb-2" }, "O Maremoto (Tsunami)"), React.createElement("p", null, "Após os abalos, as águas do Tejo recuaram e, minutos depois, uma série de ondas gigantes, com até 6 metros de altura, submergiu a baixa da cidade. O recém-construído Cais da Pedra foi completamente engolido, arrastando centenas de pessoas para a morte.")), React.createElement("div", { className: "pl-6 border-l-4 border-blue-500" }, React.createElement("h3", { className: "text-xl font-bold mb-2" }, "Os Incêndios"), React.createElement("p", null, "O terceiro elemento foram os incêndios, que deflagraram por toda a cidade e duraram cerca de seis dias. As suas origens foram múltiplas: velas acesas nas igrejas, lumes de cozinha e candelabros caídos. Muitos edifícios emblemáticos, como o Paço Real da Ribeira, foram destruídos pelo fogo."))) },
+          { id: 'response', title: 'A Resposta Imediata e a Ascensão de Pombal', image: './image3.jpg', content: React.createElement("div", { className: "space-y-4 text-lg leading-relaxed" }, React.createElement("p", null, "Nos dias que se seguiram, Lisboa mergulhou na anarquia e desespero. O rei D. José I, traumatizado, refugiou-se, criando um vazio de poder."), React.createElement("p", null, "Em contraste, a figura de Sebastião José de Carvalho e Melo, futuro Marquês de Pombal, emergiu com determinação. A sua abordagem pragmática, resumida na frase (provavelmente apócrifa) \"enterrar os mortos e cuidar dos vivos\", foi decisiva."), React.createElement("p", null, "Implementou medidas de emergência cruciais: enterro rápido dos mortos para evitar epidemias, segurança para reprimir a desordem, abastecimento de alimentos e um inquérito notável para apurar a extensão dos danos, um marco na história da sismologia.")) },
+          { id: 'reforms', title: 'As Reformas Pombalinas e o Despotismo Iluminado', image: './image4.jpg', content: React.createElement("div", { className: "space-y-4 text-lg leading-relaxed" }, React.createElement("p", null, "O terramoto foi o catalisador que permitiu a Pombal concentrar o poder e implementar uma ambiciosa agenda reformista, marcando a transição para o despotismo iluminado em Portugal."), React.createElement("p", null, "A governação pombalina, impulsionada pela urgência do pós-terramoto, materializou-se num vasto conjunto de reformas que visavam modernizar o Estado, fortalecer a economia e secularizar a sociedade."), React.createElement("ul", { className: "list-disc list-inside space-y-2" }, React.createElement("li", null, React.createElement("strong", null, "Centralização Política:"), " Afirmou a supremacia da vontade do rei sobre todas as outras fontes de direito."), React.createElement("li", null, React.createElement("strong", null, "Centralização Administrativa:"), " Criou instituições para um controlo mais eficaz da segurança e finanças."), React.createElement("li", null, React.createElement("strong", null, "Controlo Ideológico:"), " Estatizou a censura, retirando-a da Inquisição."), React.createElement("li", null, React.createElement("strong", null, "Educação:"), " Reformou a Universidade de Coimbra e expulsou os Jesuítas, quebrando o seu monopólio educacional."))) },
+          { id: 'debate', title: 'O Sismo das Ideias: O Debate Filosófico na Europa', image: './image5.jpg', content: React.createElement("div", { className: "space-y-4 text-lg leading-relaxed" }, React.createElement("p", null, "O terramoto transcendeu a sua condição de tragédia local para se tornar um evento central no debate filosófico do Iluminismo. O desastre forçou os pensadores a confrontar questões sobre a natureza de Deus, o mal e o lugar da humanidade no mundo."), React.createElement("p", null, React.createElement("strong", { className: "text-blue-600 dark:text-blue-400" }, "A Tese do Castigo Divino:"), " A interpretação tradicional, defendida pelo jesuíta Gabriel Malagrida, era que a catástrofe foi um castigo divino pelos pecados dos lisboetas. Esta visão chocou com o projeto secular de Pombal."), React.createElement("p", null, React.createElement("strong", { className: "text-blue-600 dark:text-blue-400" }, "A Resposta Iluminista:"), " Filósofos como Voltaire usaram o evento para satirizar o otimismo filosófico, enquanto Rousseau procurou uma explicação racional ligada ao urbanismo. Immanuel Kant abordou o tema de uma perspetiva puramente científica, teorizando sobre as causas naturais do fenómeno, o que o torna um precursor da sismologia moderna."), React.createElement("p", null, "Este debate ajudou a solidificar a distinção entre \"mal natural\" e \"mal moral\", enfraquecendo a base teológica do \"direito divino dos reis\".")) },
+          { id: 'reconstruction', title: 'A Reconstrução de Lisboa: O Nascimento de uma Cidade Iluminista', image: './image6.jpg', content: React.createElement("div", { className: "space-y-6 text-lg leading-relaxed" }, React.createElement("p", null, "A reconstrução da Baixa de Lisboa representou a materialização física dos ideais iluministas de razão, ordem e progresso. O Plano Pombalino, concebido por engenheiros militares, foi revolucionário."), React.createElement("p", null, "Em contraste com o traçado medieval, a nova cidade foi \"traçada à régua e esquadro\", com ruas largas, retilíneas e perpendiculares, formando uma grelha geométrica. A uniformidade dos edifícios simbolizava uma nova igualdade perante o Estado."), React.createElement("div", { className: "pl-6 border-l-4 border-blue-500" }, React.createElement("h3", { className: "text-xl font-bold mb-2" }, "Inovações Técnicas e Antissísmicas"), React.createElement("ul", { className: "list-disc list-inside space-y-2" }, React.createElement("li", null, React.createElement("strong", null, "Gaiola Pombalina:"), " Uma estrutura interna de madeira, uma espécie de esqueleto flexível para dissipar a energia sísmica."), React.createElement("li", null, React.createElement("strong", null, "Paredes Corta-Fogo:"), " Paredes mais espessas entre os edifícios para impedir a propagação de incêndios."), React.createElement("li", null, React.createElement("strong", null, "Estandardização:"), " Produção em série de elementos construtivos para uma reconstrução mais rápida e económica.")))) },
+          { id: 'legacy', title: 'O Legado na Cultura e na Memória', image: './image7.jpg', content: React.createElement("div", { className: "space-y-4 text-lg leading-relaxed" }, React.createElement("p", null, "O trauma do evento enraizou-se profundamente na cultura popular portuguesa, tornando-se parte do léxico e do imaginário nacional. Expressões idiomáticas que perduram até hoje são um testemunho vivo dessa memória."), React.createElement("p", null, "\"Cair o Carmo e a Trindade\", usada para descrever uma grande desgraça ou confusão, refere-se à destruição simultânea dos imponentes conventos durante o sismo."), React.createElement("p", null, "O terramoto tornou-se um elemento definidor da identidade de Lisboa e um ponto de referência permanente no imaginário coletivo português sobre desastre, resiliência e a capacidade de renascer das cinzas.")) },
+          { id: 'conclusion', title: 'Conclusão: Um Ponto de Viragem na História', image: './image8.jpg', content: React.createElement("div", { className: "space-y-4 text-lg leading-relaxed" }, React.createElement("p", null, "Em síntese, o terramoto de 1 de novembro de 1755 foi muito mais do que uma catástrofe natural. Funcionou como um poderoso catalisador de mudança, um ponto de viragem que redefiniu a trajetória de uma cidade, de uma nação e do próprio pensamento europeu."), React.createElement("ul", { className: "list-disc list-inside space-y-2" }, React.createElement("li", null, React.createElement("strong", null, "Para Lisboa:"), " Marcou a morte da cidade medieval e o nascimento de uma capital moderna, planeada segundo os cânones da razão."), React.createElement("li", null, React.createElement("strong", null, "Para Portugal:"), " Acelerou a centralização do poder, consolidou o despotismo iluminado de Pombal e desencadeou profundas reformas no Estado."), React.createElement("li", null, React.createElement("strong", null, "Para a Europa:"), " Serviu de gatilho para debates filosóficos do Iluminismo, contribuindo para a secularização do pensamento e para o nascimento da sismologia moderna.")), React.createElement("p", null, "A partir das ruínas de Lisboa, ergueu-se não apenas uma nova cidade, mas também uma nova ordem política e um novo paradigma de pensamento que ajudaram a moldar a transição para a modernidade.")) },
+      ];
+      const quizQuestions = [
+          { id: 1, questionText: 'Em que data ocorreu o Terramoto de Lisboa de 1755?', options: ['1 de Novembro', '25 de Dezembro', '15 de Agosto', '5 de Outubro'], correctAnswer: '1 de Novembro', feedback: 'Correto! O terramoto ocorreu no dia 1 de novembro de 1755, feriado do Dia de Todos os Santos.' },
+          { id: 2, questionText: 'Qual foi a sequência da "tripla catástrofe" que atingiu Lisboa?', options: ['Incêndio, Sismo, Maremoto', 'Sismo, Maremoto, Incêndio', 'Maremoto, Incêndio, Sismo', 'Sismo, Incêndio, Maremoto'], correctAnswer: 'Sismo, Maremoto, Incêndio', feedback: 'Exato! A catástrofe começou com o sismo, seguido por um maremoto (tsunami) e incêndios generalizados.' },
+          { id: 3, questionText: 'Que figura política se destacou na gestão da crise e na reconstrução da cidade?', options: ['Rei D. José I', 'Marquês de Pombal', 'Voltaire', 'Gabriel Malagrida'], correctAnswer: 'Marquês de Pombal', feedback: 'Muito bem! Sebastião José de Carvalho e Melo, o futuro Marquês de Pombal, foi a figura central na resposta à catástrofe.' },
+          { id: 4, questionText: 'Qual foi a inovação de engenharia mais notável introduzida na reconstrução de Lisboa para proteção sísmica?', options: ['Paredes Corta-Fogo', 'Uso de betão armado', 'Gaiola Pombalina', 'Fundações de borracha'], correctAnswer: 'Gaiola Pombalina', feedback: 'Perfeito! A Gaiola Pombalina, uma estrutura interna de madeira, foi uma inovação revolucionária para a época.' },
+          { id: 5, questionText: 'O plano de reconstrução da Baixa de Lisboa, conhecido como Plano Pombalino, caracterizava-se por:', options: ['Manter o traçado medieval original', 'Ruas estreitas e sinuosas', 'Uma grelha geométrica com ruas largas e retilíneas', 'Construir apenas edifícios de madeira'], correctAnswer: 'Uma grelha geométrica com ruas largas e retilíneas', feedback: 'Isso mesmo! O plano implementou os ideais iluministas de ordem e razão, com um traçado ortogonal.' },
+          { id: 6, questionText: 'O terramoto de Lisboa deu origem a um importante debate filosófico na Europa, associado ao movimento do:', options: ['Romantismo', 'Iluminismo', 'Barroco', 'Renascimento'], correctAnswer: 'Iluminismo', feedback: 'Correto. O evento forçou os pensadores do Iluminismo, como Voltaire e Kant, a questionar a natureza do mal e a ordem divina.' },
+          { id: 7, questionText: 'Quem foi Manuel da Maia, uma das figuras-chave na reconstrução de Lisboa?', options: ['O rei de Portugal', 'Um filósofo iluminista', 'O engenheiro-mor do reino', 'O capitão das tropas de segurança'], correctAnswer: 'O engenheiro-mor do reino', feedback: 'Correto! Manuel da Maia, o engenheiro-mor do reino, foi o principal estratega da reconstrução, apresentando várias propostas para a cidade.' },
+          { id: 8, questionText: 'Qual era o argumento principal do Padre Gabriel Malagrida sobre a causa do terramoto?', options: ['Um fenómeno natural de gases subterrâneos', 'Uma conspiração política', 'Um castigo divino pelos pecados da cidade', 'Uma falha nas construções'], correctAnswer: 'Um castigo divino pelos pecados da cidade', feedback: 'Exato. Malagrida defendia a visão teológica de que o desastre era um castigo divino, o que o colocou em conflito direto com Pombal.' },
+          { id: 9, questionText: 'Que instituição foi criada pelo Marquês de Pombal para centralizar o controlo da censura, retirando-o da Inquisição?', options: ['O Erário Régio', 'A Intendência da Polícia', 'A Real Mesa Censória', 'A Universidade de Coimbra'], correctAnswer: 'A Real Mesa Censória', feedback: 'Muito bem! A Real Mesa Censória foi o instrumento de Pombal para controlar a circulação de ideias e promover uma "verdade" oficial alinhada com os seus objetivos.' },
+          { id: 10, questionText: 'A transformação do antigo Terreiro do Paço na nova Praça do Comércio simbolizava a crescente importância de que grupo social?', options: ['A nobreza tradicional', 'O clero', 'A burguesia e a classe mercantil', 'Os militares'], correctAnswer: 'A burguesia e a classe mercantil', feedback: 'Perfeito! O novo nome refletia a ascensão da burguesia, que teve um papel crucial no financiamento da reconstrução, marcando uma nova era económica e social.' },
+          { id: 11, questionText: 'Que proeminente filósofo do Iluminismo usou o terramoto para satirizar a ideia de que "vivemos no melhor dos mundos possíveis"?', options: ['Immanuel Kant', 'Jean-Jacques Rousseau', 'Voltaire', 'Diderot'], correctAnswer: 'Voltaire', feedback: 'Isso mesmo! Voltaire, no seu "Poema sobre o desastre de Lisboa" e em "Cândido", questionou ferozmente o otimismo filosófico perante uma tragédia de tal magnitude.' },
+          { id: 12, questionText: 'Qual das seguintes expressões idiomáticas portuguesas está diretamente ligada à memória do terramoto?', options: ['Chover a potes', 'Ver tudo a andar à roda', 'Cair o Carmo e a Trindade', 'Falar pelos cotovelos'], correctAnswer: 'Cair o Carmo e a Trindade', feedback: 'Correto! A expressão refere-se à destruição simultânea dos imponentes conventos do Carmo e da Trindade durante o sismo, e hoje é usada para descrever uma grande desgraça.' },
+          { id: 13, questionText: 'A resposta de Pombal à catástrofe foi pragmática. Qual das seguintes foi uma das suas medidas mais urgentes para evitar a propagação de doenças?', options: ['Reconstruir imediatamente as igrejas', 'Realizar procissões religiosas', 'Enterrar rapidamente os mortos em valas comuns', 'Pedir ajuda internacional'], correctAnswer: 'Enterrar rapidamente os mortos em valas comuns', feedback: 'Exato. A prioridade imediata de Pombal foi a saúde pública, ordenando o enterro rápido dos corpos, uma medida drástica mas necessária para evitar epidemias.' },
+          { id: 14, questionText: 'Qual filósofo propôs uma das primeiras explicações puramente científicas para o terramoto, teorizando sobre gases em cavernas subterrâneas?', options: ['Voltaire', 'Immanuel Kant', 'Rousseau', 'Leibniz'], correctAnswer: 'Immanuel Kant', feedback: 'Muito bem! Immanuel Kant abordou o tema de uma perspetiva científica, e os seus trabalhos são considerados um dos pontos de partida da sismologia moderna.' },
+          { id: 15, questionText: 'Além da destruição física, a perda de que arquivo vital representou um golpe incalculável para a história do império português?', options: ['Os arquivos da Universidade de Coimbra', 'Os arquivos da Casa da Índia', 'A biblioteca do Convento de Mafra', 'A Torre do Tombo'], correctAnswer: 'Os arquivos da Casa da Índia', feedback: 'Correto. A destruição dos arquivos da Casa da Índia, onde se guardava toda a documentação da expansão oceânica, foi uma perda histórica irreparável.' },
+      ];
+      const glossaryTerms = [
+          { term: 'Marquês de Pombal', definition: 'Sebastião José de Carvalho e Melo, uma figura política portuguesa do século XVIII. Foi o principal responsável pela gestão da crise pós-terramoto e pela implementação de vastas reformas sociais, económicas e políticas, conhecidas como Reformas Pombalinas.' },
+          { term: 'Baixa Pombalina', definition: 'Nome dado à zona central de Lisboa reconstruída após o terramoto sob a direção do Marquês de Pombal. Caracteriza-se por um plano geométrico, ruas largas, edifícios padronizados e inovações como a gaiola antissísmica e redes de esgotos.' },
+          { term: 'Gaiola Pombalina', definition: 'Inovadora estrutura interna de madeira, semelhante a uma gaiola, implementada na construção dos edifícios da Baixa para lhes conferir maior resistência a sismos. A sua flexibilidade permitiria que a estrutura principal se mantivesse de pé mesmo com o colapso das paredes exteriores.' },
+          { term: 'Despotismo Iluminado', definition: 'Uma forma de governo do século XVIII em que monarcas absolutos perseguiam reformas legais, sociais e educacionais inspiradas pelo Iluminismo. O Marquês de Pombal é considerado um dos principais exemplos de déspota iluminado.' },
+          { term: 'Iluminismo', definition: 'Um movimento intelectual e filosófico que dominou o mundo das ideias na Europa durante o século XVIII. Enfatizava a razão, a ciência e o individualismo em detrimento da tradição. O terramoto de Lisboa foi um catalisador para debates importantes dentro deste movimento.' },
+          { term: 'Cais da Pedra', definition: 'Uma sólida estrutura de mármore no Terreiro do Paço, construída pouco antes de 1755. Foi um dos locais mais trágicos do maremoto, sendo completamente destruído e arrastando centenas de pessoas que ali procuraram refúgio.' },
+          { term: 'Eugénio dos Santos', definition: 'Arquiteto e engenheiro militar português, um dos principais responsáveis, juntamente com Manuel da Maia e Carlos Mardel, pela conceção e execução do plano de reconstrução da Baixa de Lisboa.' },
+          { term: 'Manuel da Maia', definition: 'Engenheiro-mor do reino, com quase 80 anos na altura do terramoto. Foi o principal estratega da reconstrução, tendo apresentado cinco propostas para a cidade, desde a reedificação total até à criação de uma nova capital noutro local.' },
+          { term: 'Padre Gabriel Malagrida', definition: 'Jesuíta influente que publicou a obra Juízo da Verdadeira Causa do Terramoto, argumentando que a catástrofe era um castigo divino pelos pecados dos lisboetas. A sua visão opunha-se à explicação naturalista defendida por Pombal, o que levou à sua prisão e execução pela Inquisição, tornando-se o último queimado em Portugal.' },
+          { term: 'Praça do Comércio', definition: 'Nova praça monumental construída no local do antigo Terreiro do Paço. O seu novo nome simbolizava a crescente importância da burguesia e da classe mercantil, que contribuíram financeiramente para a reconstrução, e afirmava-se como o novo centro nevrálgico, político e comercial do reino.' },
+          { term: 'Real Mesa Censória', definition: 'Instituição criada por Pombal que centralizou e estatizou a censura, retirando-a da Inquisição. Proibia obras consideradas subversivas, ímpias ou falsas, chegando a definir uma física oficial (cartesiana) e a controlar as teses académicas.' },
+          { term: 'Torre do Tombo', definition: 'Arquivo Real de Portugal, localizado numa das torres do Castelo de São Jorge. Apesar de a torre ter ruído, a documentação foi salva e transferida para o Mosteiro de São Bento, mas o nome histórico "Torre do Tombo" manteve-se.' },
+      ];
+
+      // Confetti effect component
+      const Confetti = ({ x, y }) => {
+        const emojis = ['🎉', '✨', '🌟', '⭐', '💫', '🎊'];
+        const [confettiPieces, setConfettiPieces] = useState([]);
+        
+        useEffect(() => {
+          const pieces = Array.from({ length: 8 }, (_, i) => ({
+            id: i,
+            emoji: emojis[Math.floor(Math.random() * emojis.length)],
+            left: x + (Math.random() - 0.5) * 100,
+            delay: Math.random() * 0.2
+          }));
+          setConfettiPieces(pieces);
+        }, [x, y]);
+
+        return React.createElement('div', { className: "pointer-events-none fixed inset-0 z-50" },
+          confettiPieces.map(piece =>
+            React.createElement('div', {
+              key: piece.id,
+              className: "confetti absolute",
+              style: {
+                left: `${piece.left}px`,
+                top: `${y}px`,
+                animationDelay: `${piece.delay}s`
+              }
+            }, piece.emoji)
+          )
+        );
+      };
+
+      // --- COMPONENTS ---
+      const Header = () => React.createElement('header', { className: "bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 shadow-2xl header-pattern relative overflow-hidden" }, 
+        React.createElement('div', { className: "absolute inset-0 bg-black opacity-10" }),
+        React.createElement('div', { className: "container mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center relative z-10 fade-in" }, 
+          React.createElement('h1', { className: "text-4xl sm:text-5xl md:text-6xl font-bold text-white drop-shadow-lg" }, "O Terramoto de 1755"), 
+          React.createElement('p', { className: "mt-3 text-xl text-blue-100 drop-shadow-md" }, "Uma Análise da Transformação de Portugal")
+        )
+      );
+
+      const Section = ({ id, title, image, children }) => React.createElement('section', { id, className: "my-8 scroll-mt-20 fade-in" }, 
+        React.createElement('div', { className: "bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 md:p-8 shadow-xl section-hover border border-gray-200 dark:border-gray-700" }, 
+          React.createElement('h2', { className: "text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-6 border-b-2 border-blue-200 dark:border-blue-800 pb-3" }, title), 
+          React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-3 gap-8 items-start" }, 
+            React.createElement('div', { className: "md:col-span-2" }, children), 
+            React.createElement('div', { className: "md:col-span-1 image-zoom" }, 
+              React.createElement('img', { src: image, alt: title, className: "w-full h-auto rounded-xl shadow-2xl object-cover aspect-square border-4 border-white dark:border-gray-700" })
+            )
+          )
+        )
+      );
+
+      const Footer = () => React.createElement('footer', { className: "bg-gradient-to-r from-gray-900 to-gray-800 mt-auto shadow-inner" }, 
+        React.createElement('div', { className: "container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center" }, 
+          React.createElement('p', { className: "text-gray-300 font-medium" }, `© ${new Date().getFullYear()} Análise Histórica Interativa. Todos os direitos reservados.`), 
+          React.createElement('p', { className: "text-sm text-gray-400 mt-2" }, "Criado como um recurso educacional.")
+        )
+      );
+
+      const GlossaryItem = ({ term }) => {
+          const [isOpen, setIsOpen] = useState(false);
+          return React.createElement('div', { className: "border-b border-gray-200 dark:border-gray-700 transition-all hover:bg-gray-50 dark:hover:bg-gray-800" }, 
+            React.createElement('button', { onClick: () => setIsOpen(!isOpen), className: "w-full flex justify-between items-center text-left p-5 focus:outline-none focus:bg-gradient-to-r focus:from-blue-50 focus:to-purple-50 dark:focus:from-gray-800 dark:focus:to-gray-700 transition-all" }, 
+              React.createElement('span', { className: "text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent" }, term.term), 
+              React.createElement(ChevronDownIcon, { className: `w-6 h-6 transform transition-transform duration-300 text-blue-600 dark:text-blue-400 ${isOpen ? 'rotate-180' : ''}` })
+            ), 
+            React.createElement('div', { className: `overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96' : 'max-h-0'}` }, 
+              React.createElement('div', { className: "p-5 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 border-l-4 border-blue-500" }, 
+                React.createElement('p', { className: "text-gray-700 dark:text-gray-300 leading-relaxed" }, term.definition)
+              )
+            )
+          );
+      };
+
+      const Glossary = ({ terms }) => React.createElement('div', { className: "max-w-4xl mx-auto fade-in" }, 
+        React.createElement('h2', { className: "text-4xl font-bold text-center gradient-text mb-8" }, "Glossário de Termos"), 
+        React.createElement('div', { className: "bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700" }, 
+          terms.map((term, index) => React.createElement(GlossaryItem, { key: index, term }))
+        )
+      );
+
+      const Quiz = ({ questions, onComplete }) => {
+        const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+        const [userAnswers, setUserAnswers] = useState([]);
+        const [selectedAnswer, setSelectedAnswer] = useState(null);
+        const [feedback, setFeedback] = useState(null);
+        const [isFinished, setIsFinished] = useState(false);
+        const [userName, setUserName] = useState('');
+        const [showConfetti, setShowConfetti] = useState(false);
+        const [confettiPos, setConfettiPos] = useState({ x: 0, y: 0 });
+        
+        const handleAnswerSelect = (answer, event) => {
+            if (feedback) return;
+            setSelectedAnswer(answer);
+            const isCorrect = answer === questions[currentQuestionIndex].correctAnswer;
+            setFeedback({ message: questions[currentQuestionIndex].feedback, isCorrect });
+            
+            if (isCorrect) {
+              const rect = event.target.getBoundingClientRect();
+              setConfettiPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+              setShowConfetti(true);
+              setTimeout(() => setShowConfetti(false), 1000);
+            }
+        };
+
+        const handleNextQuestion = useCallback(() => {
+            if (!selectedAnswer) return;
+            setUserAnswers(prev => [...prev, { question: questions[currentQuestionIndex].questionText, answer: selectedAnswer, correct: selectedAnswer === questions[currentQuestionIndex].correctAnswer }]);
+            setSelectedAnswer(null);
+            setFeedback(null);
+            if (currentQuestionIndex < questions.length - 1) {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+            } else {
+                setIsFinished(true);
+            }
+        }, [selectedAnswer, currentQuestionIndex, questions.length]);
+
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            if (userName.trim() === '') {
+                alert('Por favor, insira o seu nome.');
+                return;
+            }
+            const score = userAnswers.reduce((acc, ans) => ans.correct ? acc + 1 : acc, 0);
+            const result = { score, totalQuestions: questions.length, percentage: (score / questions.length) * 100 };
+            onComplete(result, userName);
+        };
+
+        if (isFinished) {
+            return React.createElement('div', { className: "text-center p-8 max-w-lg mx-auto fade-in" }, 
+              React.createElement('div', { className: "bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-2xl border-2 border-blue-200 dark:border-blue-700" },
+                React.createElement('h2', { className: "text-4xl font-bold gradient-text mb-4" }, "Quiz Concluído!"), 
+                React.createElement('p', { className: "text-lg mb-6 text-gray-700 dark:text-gray-300" }, "Obrigado por participar. Por favor, insira o seu nome para gerar o certificado."), 
+                React.createElement('form', { onSubmit: handleSubmit, className: "flex flex-col items-center gap-4" }, 
+                  React.createElement('input', { type: "text", value: userName, onChange: (e) => setUserName(e.target.value), placeholder: "O seu nome completo", className: "w-full px-4 py-3 border-2 border-blue-300 dark:border-blue-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white shadow-md transition-all", required: true }), 
+                  React.createElement('button', { type: "submit", className: "w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105" }, "Gerar Certificado")
+                )
+              )
+            );
+        }
+
+        const currentQuestion = questions[currentQuestionIndex];
+        const progress = ((currentQuestionIndex) / questions.length) * 100;
+
+        return React.createElement('div', { className: "p-4 md:p-8 max-w-3xl mx-auto fade-in" }, 
+          showConfetti && React.createElement(Confetti, { x: confettiPos.x, y: confettiPos.y }),
+          React.createElement('h2', { className: "text-4xl font-bold text-center gradient-text mb-4" }, "Quiz Interativo"), 
+          React.createElement('div', { className: "w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700 mb-2 shadow-inner" }, 
+            React.createElement('div', { className: "bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out shadow-lg", style: { width: `${progress}%` } })
+          ),
+          React.createElement('div', { className: "flex justify-center gap-2 mb-6" },
+            questions.map((_, idx) => 
+              React.createElement('div', {
+                key: idx,
+                className: `w-3 h-3 rounded-full transition-all ${
+                  idx < currentQuestionIndex ? 'bg-green-500' :
+                  idx === currentQuestionIndex ? 'bg-blue-600 scale-125' :
+                  'bg-gray-300 dark:bg-gray-600'
+                }`
+              })
+            )
+          ),
+          React.createElement('p', { className: "text-center text-gray-600 dark:text-gray-400 mb-8 font-medium" }, `Pergunta ${currentQuestionIndex + 1} de ${questions.length}`), 
+          React.createElement('div', { className: "bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl shadow-2xl border-2 border-gray-200 dark:border-gray-700" }, 
+            React.createElement('h3', { className: "text-xl md:text-2xl font-semibold mb-8 text-center text-gray-800 dark:text-gray-100" }, currentQuestion.questionText), 
+            React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-4" }, 
+              currentQuestion.options.map((option, index) => {
+                const isSelected = selectedAnswer === option;
+                const isCorrect = option === currentQuestion.correctAnswer;
+                let buttonClass = 'p-5 rounded-xl text-left w-full transition-all duration-200 transform hover:scale-105 border-2 font-medium shadow-md';
+                if (feedback && isCorrect) {
+                    buttonClass += ' bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50 border-green-500 text-green-800 dark:text-green-300 shadow-green-200 dark:shadow-green-900';
+                } else if (feedback && isSelected && !isCorrect) {
+                    buttonClass += ' bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900/50 dark:to-red-800/50 border-red-500 text-red-800 dark:text-red-300 shadow-red-200 dark:shadow-red-900';
+                } else {
+                    buttonClass += ' bg-white dark:bg-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-gray-600 dark:hover:to-gray-500 border-gray-300 dark:border-gray-500';
+                }
+                return React.createElement('button', { key: index, onClick: (e) => handleAnswerSelect(option, e), disabled: !!feedback, className: buttonClass }, option);
+              })
+            )
+          ), 
+          feedback && React.createElement('div', { className: `mt-6 p-6 rounded-2xl flex items-start space-x-4 shadow-xl border-2 ${feedback.isCorrect ? 'bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50 border-green-500' : 'bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900/50 dark:to-red-800/50 border-red-500'}` }, 
+            feedback.isCorrect ? React.createElement(CheckCircleIcon, { className: "text-green-600 dark:text-green-400" }) : React.createElement(XCircleIcon, { className: "text-red-600 dark:text-red-400" }), 
+            React.createElement('p', { className: `text-lg font-medium ${feedback.isCorrect ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}` }, feedback.message)
+          ), 
+          feedback && React.createElement('div', { className: "text-center mt-8" }, 
+            React.createElement('button', { onClick: handleNextQuestion, className: "px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105" }, 
+              currentQuestionIndex < questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'
+            )
+          )
+        );
+      };
+
+      const Certificate = ({ name, result }) => {
+        const getQualitativeFeedback = (percentage) => {
+            if (percentage >= 90) return { message: 'Excelente Desempenho!', color: 'text-green-600 dark:text-green-400', gradient: 'from-green-500 to-emerald-600' };
+            if (percentage >= 70) return { message: 'Muito Bom Trabalho!', color: 'text-blue-600 dark:text-blue-400', gradient: 'from-blue-500 to-cyan-600' };
+            if (percentage >= 50) return { message: 'Bom Esforço!', color: 'text-yellow-600 dark:text-yellow-400', gradient: 'from-yellow-500 to-orange-600' };
+            return { message: 'Continue a Aprender!', color: 'text-red-600 dark:text-red-400', gradient: 'from-red-500 to-rose-600' };
+        };
+        const feedback = getQualitativeFeedback(result.percentage);
+        const formattedDate = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
+
+        return React.createElement('div', { className: "max-w-5xl mx-auto p-4 sm:p-8 fade-in" }, 
+          React.createElement('div', { className: "bg-gradient-to-br from-white via-blue-50 to-purple-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 border-8 border-double border-blue-800 dark:border-blue-400 rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden" }, 
+            React.createElement('div', { className: "absolute top-10 right-10 w-32 h-32 bg-blue-200 dark:bg-blue-900 rounded-full opacity-20" }),
+            React.createElement('div', { className: "absolute bottom-10 left-10 w-40 h-40 bg-purple-200 dark:bg-purple-900 rounded-full opacity-20" }),
+            React.createElement('div', { className: "absolute top-0 left-0 w-full h-full bg-no-repeat bg-center bg-contain opacity-5", style: { backgroundImage: "url('./image5.jpg')" } }),
+            React.createElement('div', { className: "text-center relative z-10" }, 
+              React.createElement('div', { className: "flex justify-center mb-6" },
+                React.createElement(AwardIcon, { className: "text-blue-600 dark:text-blue-400" })
+              ),
+              React.createElement('h2', { className: "text-2xl font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2" }, "Certificado de Conclusão"), 
+              React.createElement('h1', { className: "text-4xl sm:text-6xl font-bold gradient-text my-6" }, "O Terramoto de Lisboa de 1755"), 
+              React.createElement('p', { className: "text-xl text-gray-700 dark:text-gray-300 mb-2" }, "Este certificado é concedido a"), 
+              React.createElement('p', { className: "text-4xl font-serif text-gray-900 dark:text-white my-6 border-b-4 border-blue-500 dark:border-blue-400 pb-3 inline-block px-8" }, name), 
+              React.createElement('p', { className: "text-lg text-gray-700 dark:text-gray-300 mt-4 max-w-2xl mx-auto" }, "por concluir com sucesso a sequência didática sobre o Terramoto de 1755 e a Transformação de Portugal."), 
+              React.createElement('div', { className: "mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto" }, 
+                React.createElement('div', { className: "bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 p-6 rounded-2xl shadow-xl border-2 border-blue-300 dark:border-blue-600" }, 
+                  React.createElement('div', { className: "flex items-center gap-3 mb-3" },
+                    React.createElement(TrophyIcon, { className: "text-blue-600 dark:text-blue-400" }),
+                    React.createElement('h3', { className: "font-bold text-gray-800 dark:text-gray-200 text-lg" }, "Resultado Quantitativo")
+                  ),
+                  React.createElement('p', { className: "text-3xl font-bold text-blue-700 dark:text-blue-400" }, `${result.score} / ${result.totalQuestions}`), 
+                  React.createElement('p', { className: "text-gray-600 dark:text-gray-400 mt-1" }, `(${result.percentage.toFixed(0)}% de acerto)`)
+                ), 
+                React.createElement('div', { className: `bg-gradient-to-br ${feedback.gradient === 'from-green-500 to-emerald-600' ? 'from-green-100 to-emerald-200 dark:from-green-900/50 dark:to-emerald-800/50 border-green-300 dark:border-green-600' : feedback.gradient === 'from-blue-500 to-cyan-600' ? 'from-blue-100 to-cyan-200 dark:from-blue-900/50 dark:to-cyan-800/50 border-blue-300 dark:border-blue-600' : feedback.gradient === 'from-yellow-500 to-orange-600' ? 'from-yellow-100 to-orange-200 dark:from-yellow-900/50 dark:to-orange-800/50 border-yellow-300 dark:border-yellow-600' : 'from-red-100 to-rose-200 dark:from-red-900/50 dark:to-rose-800/50 border-red-300 dark:border-red-600'} p-6 rounded-2xl shadow-xl border-2` }, 
+                  React.createElement('div', { className: "flex items-center gap-3 mb-3" },
+                    React.createElement(CheckCircleIcon, { className: feedback.color }),
+                    React.createElement('h3', { className: "font-bold text-gray-800 dark:text-gray-200 text-lg" }, "Avaliação Qualitativa")
+                  ),
+                  React.createElement('p', { className: `text-3xl font-bold ${feedback.color}` }, feedback.message)
+                )
+              ), 
+              React.createElement('div', { className: "mt-12 pt-6 border-t-2 border-gray-300 dark:border-gray-600" }, 
+                React.createElement('p', { className: "text-sm text-gray-500 dark:text-gray-400" }, `Emitido em: ${formattedDate}`)
+              )
+            )
+          )
+        );
+      };
+
+      const Video = () => {
+        return React.createElement('div', { className: "max-w-4xl mx-auto fade-in" },
+          React.createElement('h2', { className: "text-4xl font-bold text-center gradient-text mb-8" }, "Documentário Visual"),
+          React.createElement('div', { className: "relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-gray-700" },
+            React.createElement('video', {
+              className: "w-full h-auto",
+              controls: true,
+              preload: "metadata"
+            },
+              React.createElement('source', {
+                src: "https://alvarovelho.net/mp4/O_Terramoto_de_1755.mp4",
+                type: "video/mp4"
+              }),
+              "O seu navegador não suporta a reprodução de vídeo."
+            )
+          )
+        );
+      };
+
+      const Podcast = () => {
+        return React.createElement('div', { className: "max-w-4xl mx-auto fade-in" },
+          React.createElement('h2', { className: "text-4xl font-bold text-center gradient-text mb-8" }, "Podcast Áudio"),
+          React.createElement('div', { className: "bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-2xl border-4 border-white dark:border-gray-700" },
+            React.createElement('div', { className: "flex items-center justify-center mb-6" },
+              React.createElement('div', { className: "w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg" },
+                React.createElement(MicrophoneIcon, { className: "h-10 w-10 text-white" })
+              )
+            ),
+            React.createElement('h3', { className: "text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-6" }, "1755: O Terramoto de Lisboa"),
+            React.createElement('audio', {
+              className: "w-full",
+              controls: true,
+              preload: "metadata",
+              style: { outline: 'none' }
+            },
+              React.createElement('source', {
+                src: "https://alvarovelho.net/mp3/1755_O_Terramoto.mp3",
+                type: "audio/mpeg"
+              }),
+              "O seu navegador não suporta a reprodução de áudio."
+            ),
+            React.createElement('p', { className: "text-center text-gray-600 dark:text-gray-400 mt-6 text-sm" }, "Ouça esta narrativa histórica sobre o Terramoto de 1755 e as suas consequências para Portugal e a Europa.")
+          )
+        );
+      };
+      
+      // --- MAIN APP COMPONENT ---
+      const App = () => {
+        const [activeView, setActiveView] = useState('home');
+        const [userName, setUserName] = useState('');
+        const [quizResult, setQuizResult] = useState(null);
+        
+        const handleQuizComplete = useCallback((result, name) => {
+            setQuizResult(result);
+            setUserName(name);
+            setActiveView('certificate');
+        }, []);
+
+        const renderContent = () => {
+            switch (activeView) {
+                case 'video': return React.createElement(Video, null);
+                case 'podcast': return React.createElement(Podcast, null);
+                case 'quiz': return React.createElement(Quiz, { questions: quizQuestions, onComplete: handleQuizComplete });
+                case 'glossary': return React.createElement(Glossary, { terms: glossaryTerms });
+                case 'certificate': return quizResult ? React.createElement(Certificate, { name: userName, result: quizResult }) : React.createElement('div', { className: "text-center p-8 fade-in" }, 
+                  React.createElement('div', { className: "bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-xl border-2 border-blue-200 dark:border-blue-700" },
+                    React.createElement('p', { className: "text-xl text-gray-700 dark:text-gray-300 mb-4" }, "Complete o quiz para ver o seu certificado."), 
+                    React.createElement('button', { onClick: () => setActiveView('quiz'), className: "mt-4 px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105" }, "Ir para o Quiz")
+                  )
+                );
+                default: return React.createElement('div', { className: "space-y-12" }, sections.map((section) => React.createElement(Section, { key: section.id, id: section.id, title: section.title, image: section.image }, section.content)));
+            }
+        };
+
+        const navItems = [
+            { id: 'home', label: 'Início', icon: React.createElement(HomeIcon, null) },
+            { id: 'video', label: 'Vídeo', icon: React.createElement(PlayIcon, null) },
+            { id: 'podcast', label: 'Podcast', icon: React.createElement(MicrophoneIcon, null) },
+            { id: 'glossary', label: 'Glossário', icon: React.createElement(BookOpenIcon, null) },
+            { id: 'quiz', label: 'Quiz', icon: React.createElement(ClipboardCheckIcon, null) },
+        ];
+
+        return React.createElement('div', { className: "min-h-screen flex flex-col" }, 
+          React.createElement(Header, null), 
+          React.createElement('main', { className: "flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8" }, 
+            React.createElement('div', { className: "bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700" }, 
+              React.createElement('nav', { className: "bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-b-2 border-gray-200 dark:border-gray-700 sticky top-0 z-10 backdrop-blur-sm bg-opacity-95" }, 
+                React.createElement('div', { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" }, 
+                  React.createElement('div', { className: "flex items-center justify-center h-16" }, 
+                    React.createElement('div', { className: "flex items-center space-x-2 sm:space-x-3" }, 
+                      navItems.map(item => React.createElement('button', { 
+                        key: item.id, 
+                        onClick: () => setActiveView(item.id), 
+                        className: `flex items-center space-x-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 transform ${activeView === item.id ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'}` 
+                      }, 
+                        item.icon, 
+                        React.createElement('span', { className: "hidden sm:inline" }, item.label)
+                      ))
+                    )
+                  )
+                )
+              ), 
+              React.createElement('div', { className: "p-6 md:p-10" }, renderContent())
+            )
+          ), 
+          React.createElement(Footer, null)
+        );
+      };
+
+      // --- RENDER APP ---
+      const rootElement = document.getElementById('root');
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(React.createElement(App));
+    </script>
+</body>
+</html>
